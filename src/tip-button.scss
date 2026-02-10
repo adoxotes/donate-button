@@ -1,0 +1,303 @@
+@use "sass:map";
+@import "@fontsource/pacifico/index.css";
+
+// MARK: Constants
+$coin-size: 4rem;
+$coin-thickness: calc($coin-size / 10);
+$font-main: 'Pacifico', cursive;
+
+$colors: (
+  "bg-button": #F3D400,
+  "text": #333,
+  "coin-main": #2775ca,
+  "coin-dark": #1e5ba1,
+  "coin-side": #184a82,
+  "shine": #e9f4ff,
+  "error": #ff4d4f
+);
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin full-size {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+$usdc-logo: url("./assets/usdc.svg");
+
+// MARK: Tip Button
+.tip-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  perspective: 1000px;
+}
+
+.tip-button {
+  position: relative;
+  width: 9.5rem;
+  height: 2.6rem;
+  background: map.get($colors, "bg-button");
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 0.25rem;
+  font-family: $font-main;
+  font-size: 1.2rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  transform-style: preserve-3d;
+  z-index: 5;
+
+  // Logic for hiding the coin
+  &.is-hovering {
+    .coin {
+      transform:
+        translateX(50%)
+        scale(calc(0.4 + var(--coin-scale-multiplier)))
+        translateZ(-1px);
+    }
+  }
+
+  &__text {
+    position: relative;
+    // Ensure text stays on top of button
+    transform: translateZ(2px);
+    color: map.get($colors, "text");
+    margin-right: 1.8rem;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    display: inline-block;
+  }
+
+  .dots {
+    display: inline-flex;
+    margin-left: 2px;
+    
+    span {
+      animation: dot-pulse 1.4s infinite;
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
+    }
+  }
+
+  &.clicked {
+    animation: toss 250ms ease-in-out 1;
+    pointer-events: none;
+  }
+
+  &.coin-landed {
+    animation: catch 250ms ease-in-out;
+  }
+
+  &::after {
+    @include full-size;
+    content: '';
+    @include flex-center;
+    z-index: 3;
+    opacity: 0;
+    transform: scale(0);
+    transition: transform 200ms cubic-bezier(0, 0, 0.35, 1.43);
+    display: none; // Disable the old absolute Thank you overlay
+  }
+}
+
+// Redo animation in two times to not reset properties
+@keyframes toss {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: translateY(10px);
+    animation-timing-function: ease-out;
+  }
+}
+
+@keyframes catch {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: translateY(10px);
+    animation-timing-function: ease-out;
+  }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.2; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+// MARK: Coin
+.coin {
+  // Default Animation Multipliers (populated by React)
+  --front-y-multiplier: 0;
+  --back-y-multiplier: 0;
+  --coin-y-multiplier: 0;
+  --coin-x-multiplier: 0;
+  --coin-scale-multiplier: 0;
+  --coin-rotation-multiplier: 0;
+  --front-scale-multiplier: 0;
+  --middle-scale-multiplier: 0;
+  --back-scale-multiplier: 1;
+  --shine-opacity-multiplier: 0.1;
+  --shine-bg-multiplier: 50%;
+
+  position: absolute;
+
+  // Ensure the coin can move in 3D
+  transform-style: preserve-3d;
+
+  width: $coin-size;
+  height: $coin-size;
+  bottom: calc(var(--coin-y-multiplier) * 1rem - (0.95 * #{$coin-size}));
+  right: calc(var(--coin-x-multiplier) * 34% + 14%);
+  margin-bottom: 3.05rem;
+
+  transform:
+    translateX(50%)
+    scale(calc(0.4 + var(--coin-scale-multiplier)))
+    translateZ(1px);
+
+  transition: transform 300ms ease-in-out;
+
+  // Face Shared Styles
+  &__front, &__middle, &__back, &::before {
+    @include full-size;
+    border-radius: 50%;
+    box-sizing: border-box;
+    z-index: 3;
+  }
+
+  &__front, &__back {
+    background: $usdc-logo map.get($colors, "coin-dark") no-repeat center / 100%;
+
+    &::after {
+      content: '';
+      @include full-size;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  &__front {
+    transform: translateY(calc(var(--front-y-multiplier) * #{$coin-thickness} / 2)) scaleY(var(--front-scale-multiplier));
+    &::after { opacity: var(--front-y-multiplier); }
+  }
+
+  &__back {
+    transform: translateY(calc(var(--back-y-multiplier) * #{$coin-thickness} / 2)) scaleY(var(--back-scale-multiplier));
+    &::after { opacity: var(--back-y-multiplier); }
+  }
+
+  &__middle {
+    background: map.get($colors, "coin-side");
+    transform: translateY(calc(var(--middle-y-multiplier) * #{$coin-thickness} / 2)) scaleY(var(--middle-scale-multiplier));
+  }
+
+  // Dynamic Shine Layer
+  &::before {
+    content: '';
+    z-index: 4;
+    opacity: var(--shine-opacity-multiplier);
+    background:
+      radial-gradient(circle at 25% 65%, transparent 50%, rgba(255, 255, 255, 0.9) 90%),
+      linear-gradient(55deg,
+        transparent var(--shine-bg-multiplier),
+        map.get($colors, "shine") var(--shine-bg-multiplier),
+        transparent calc(var(--shine-bg-multiplier) + 50%)
+      );
+    transform:
+      translateY(calc(var(--middle-y-multiplier) * #{$coin-thickness} / -2))
+      scaleY(var(--middle-scale-multiplier))
+      rotate(calc(var(--coin-rotation-multiplier) * 1deg));
+  }
+
+  // Edge Thickness
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: $coin-thickness;
+    background: map.get($colors, "coin-side");
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+}
+
+// MARK: Error Card
+.error-card {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 2;
+  animation: slideOut 300ms ease-out forwards;
+
+  font-family: sans-serif;
+  font-size: 0.85rem;
+  color: black;
+
+  &__content {
+    position: relative;
+    padding: 0.5rem;
+    border-left: 4px solid map.get($colors, "error");
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+  }
+
+  &__title {
+    font-weight: bold;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    &:hover {
+      color: #666;
+    }
+  }
+
+  &__body {
+    color: map.get($colors, "text");
+    word-break: break-word;
+    font-family: sans-serif;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
