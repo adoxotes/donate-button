@@ -27,9 +27,6 @@ const USDC_ABI = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
-  { type: "error", name: "FundMe__NotEnoughFunds", inputs: [] },
-  { type: "error", name: "FundMe__NotOwner", inputs: [] },
-  { type: "error", name: "FundMe__TransferFailed", inputs: [] },
 ] as const;
 
 // Minimal ABI for the FundMe contract to handle the tipping logic.
@@ -40,6 +37,18 @@ const FUND_ME_ABI = [
     stateMutability: "nonpayable",
     inputs: [{ name: "_amount", type: "uint256" }],
     outputs: [],
+  },
+  { type: "error", name: "FundMe__NotEnoughFunds", inputs: [] },
+  { type: "error", name: "FundMe__NotOwner", inputs: [] },
+  { type: "error", name: "FundMe__TransferFailed", inputs: [] },
+  {
+    type: "error",
+    name: "ERC20InsufficientBalance",
+    inputs: [
+      { name: "sender", type: "address", internalType: "address" },
+      { name: "balance", type: "uint256", internalType: "uint256" },
+      { name: "needed", type: "uint256", internalType: "uint256" },
+    ],
   },
 ] as const;
 
@@ -95,6 +104,9 @@ const TipButton: React.FC = () => {
     }
     if (message.includes("User rejected the request")) {
       return "User rejected the request.";
+    }
+    if (message.includes("ERC20InsufficientBalance")) {
+      return "Not enough USDC in wallet.";
     }
     return "An unexpected error occurred.";
   };
