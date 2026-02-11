@@ -7,6 +7,7 @@ import {
   parseUnits,
 } from "viem";
 import { anvil } from "viem/chains";
+import TipSelector from "./TipSelector";
 
 // Address of the FundMe smart contract that receives the tips.
 const FUND_ME_ADDRESS = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
@@ -26,6 +27,9 @@ const USDC_ABI = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
+  { type: "error", name: "FundMe__NotEnoughFunds", inputs: [] },
+  { type: "error", name: "FundMe__NotOwner", inputs: [] },
+  { type: "error", name: "FundMe__TransferFailed", inputs: [] },
 ] as const;
 
 // Minimal ABI for the FundMe contract to handle the tipping logic.
@@ -77,6 +81,7 @@ const TipButton: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [tipAmount, setTipAmount] = useState("5");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const coinRef = useRef<HTMLDivElement>(null);
 
@@ -252,7 +257,13 @@ const TipButton: React.FC = () => {
       });
 
       const [address] = await walletClient.requestAddresses();
-      const amount = parseUnits("1", 6);
+
+      const parsedAmount = parseFloat(tipAmount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("Invalid tip amount");
+      }
+
+      const amount = parseUnits(tipAmount, 6);
 
       // Approve USDC transfer
       const { request: approveReq } = await publicClient.simulateContract({
@@ -310,6 +321,11 @@ const TipButton: React.FC = () => {
 
   return (
     <div className="tip-button-container">
+      <TipSelector
+        onAmountChange={setTipAmount}
+        disabled={isProcessing || isSuccess}
+      />
+
       <button
         className="tip-button"
         ref={buttonRef}
