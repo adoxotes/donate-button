@@ -83,8 +83,9 @@ $usdc-logo: url("./assets/usdc.svg");
     }
 
     &.is-selected {
-      background: map.get($colors, "bg-button");
       font-weight: bold;
+      background: map.get($colors, "bg-button");
+      border: 1px solid rgba(0,0,0,0.1);
     }
 
     &:disabled {

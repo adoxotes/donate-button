@@ -53,7 +53,7 @@ fund:
 
 withdraw:
 	@cast send $$(cat .build/contract_address) "withdraw()" \
-		--private-key $(owner_key)
+		--private-key $$(pass $(owner))
 
 wallet-balance:
 	@ADDR=$$(cast wallet address --private-key $$(pass $(owner))); \

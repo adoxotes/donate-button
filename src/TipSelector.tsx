@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 interface TipSelectorProps {
   onAmountChange: (amount: string) => void;
@@ -12,25 +12,23 @@ const TipSelector: React.FC<TipSelectorProps> = ({
   const [selected, setSelected] = useState<string>("5");
   const [customAmount, setCustomAmount] = useState<string>("");
 
-  const options = ["5", "10", "15", "custom"];
-
-  useEffect(() => {
-    if (selected === "custom") {
-      onAmountChange(customAmount);
-    } else {
-      onAmountChange(selected);
-    }
-  }, [selected, customAmount, onAmountChange]);
+  const options = ["5", "10", "20", "custom"];
 
   const handleSelect = (opt: string) => {
     if (disabled) return;
     setSelected(opt);
+    if (opt === "custom") {
+      onAmountChange(customAmount);
+    } else {
+      onAmountChange(opt);
+    }
   };
 
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val === "") {
       setCustomAmount("");
+      onAmountChange("");
       return;
     }
     // Allow numbers and one decimal point, max 2 decimal places
@@ -38,6 +36,7 @@ const TipSelector: React.FC<TipSelectorProps> = ({
       const num = parseFloat(val);
       if (num <= 1000) {
         setCustomAmount(val);
+        onAmountChange(val);
       }
     }
   };
@@ -61,7 +60,7 @@ const TipSelector: React.FC<TipSelectorProps> = ({
                     value={customAmount}
                     onChange={handleCustomChange}
                     onClick={(e) => e.stopPropagation()}
-                    placeholder="Custom"
+                    placeholder={customAmount ? "" : "Custom"}
                     autoFocus
                     disabled={disabled}
                   />
@@ -75,7 +74,7 @@ const TipSelector: React.FC<TipSelectorProps> = ({
           </div>
         ))}
       </div>
-      <span className="tip-selector-currency">USDC</span>
+      {/* <span className="tip-selector-currency">USDC</span> */}
     </div>
   );
 };

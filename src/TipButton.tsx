@@ -108,6 +108,9 @@ const TipButton: React.FC = () => {
     if (message.includes("ERC20InsufficientBalance")) {
       return "Not enough USDC in wallet.";
     }
+    if (message.includes("Invalid tip amount")) {
+      return "Invalid tip amount.";
+    }
     return "An unexpected error occurred.";
   };
 
@@ -231,6 +234,8 @@ const TipButton: React.FC = () => {
   const handleTrigger = useCallback(async () => {
     if (state.current.isAnimating || isProcessing) return;
 
+    setErrorMessage(null);
+
     if (!window.ethereum) {
       alert("Please install a wallet like MetaMask to tip!");
       return;
@@ -271,6 +276,7 @@ const TipButton: React.FC = () => {
       const [address] = await walletClient.requestAddresses();
 
       const parsedAmount = parseFloat(tipAmount);
+      console.log(parsedAmount);
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         throw new Error("Invalid tip amount");
       }
@@ -312,7 +318,7 @@ const TipButton: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [renderFrame, isProcessing, resetCoin]);
+  }, [renderFrame, isProcessing, resetCoin, tipAmount]);
 
   const renderButtonContent = () => {
     if (isSuccess) return "Thank you!";
